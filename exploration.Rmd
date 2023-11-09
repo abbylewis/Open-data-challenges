@@ -20,14 +20,25 @@ survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheet
 questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
 ```
 
-```{r}
-plot_global_result(column_n = 26, survey_results, as_percent = F)
-plot_global_result(column_n = 26, survey_results, as_percent = T)
+```{r demographics}
+plot_global_result(column_n = 18, survey_results, as_percent = T, questions = questions)
+plot_global_result(column_n = 20, survey_results, as_percent = T, questions = questions)
+plot_global_result(column_n = 22, survey_results, as_percent = T, questions = questions)
 ```
 
-```{r}
+```{r demographics-facet}
 plot_facet_result(column_n = 18, group_n = 20, 
                   df = survey_results, questions = questions, 
                   as_percent = F)
+
+plot_facet_result(column_n = 26, group_n = 20, 
+                  df = survey_results, questions = questions, 
+                  as_percent = F)
+```
+
+```{r role-type}
+survey_results_role <- survey_results |> 
+  mutate(`Role type` =  str_split_i(`Role type`, ':', i = 1))
+plot_global_result(column_n = 26, survey_results_role, as_percent = T, questions = questions)
 ```
 
