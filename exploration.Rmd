@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
+source('R/plotting_functions.R')
 ```
 
 ## Read in data
@@ -16,9 +17,17 @@ library(lubridate)
 survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c') |> 
   filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
   
+questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
 ```
 
 ```{r}
-plot_global_result(column_n = 20, survey_results)
+plot_global_result(column_n = 26, survey_results, as_percent = F)
+plot_global_result(column_n = 26, survey_results, as_percent = T)
+```
+
+```{r}
+plot_facet_result(column_n = 18, group_n = 20, 
+                  df = survey_results, questions = questions, 
+                  as_percent = F)
 ```
 
