@@ -1,0 +1,22 @@
+---
+title: "initial_data_analysis"
+author: "Freya Olsson"
+date: "2023-11-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in data
+```{r}
+survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c') |> 
+  filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
+  
+```
+
+```{r}
+plot_global_result(column_n = 20, survey_results)
+```
+
