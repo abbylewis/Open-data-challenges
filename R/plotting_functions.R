@@ -1,4 +1,4 @@
-plot_global_result <- function(column_n, df = survey_results, as_percent = T, questions=questions) {
+plot_global_result <- function(column_n, df = survey_results, as_percent = T, questions) {
 
 
   # extract column id
@@ -25,7 +25,8 @@ plot_global_result <- function(column_n, df = survey_results, as_percent = T, qu
   }
   p +
     theme_bw() +
-    labs(subtitle = questions[1, column_n])
+    labs(subtitle = questions[1, column_n]) +
+    theme(axis.text.x = element_text(angle = 90))
 
 }
 
@@ -33,7 +34,7 @@ plot_global_result <- function(column_n, df = survey_results, as_percent = T, qu
 plot_facet_result <- function(column_n,
                               group_n,
                               df = survey_results,
-                              questions = questions,
+                              questions,
                               as_percent = T) {
 
 
