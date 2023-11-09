@@ -1,4 +1,4 @@
-plot_global_result <- function(column_n, df = survey_results, as_percent = T) {
+plot_global_result <- function(column_n, df = survey_results, as_percent = T, questions=questions) {
 
 
   # extract column id
@@ -13,54 +13,62 @@ plot_global_result <- function(column_n, df = survey_results, as_percent = T) {
 
   # plot results
   if (as_percent) {
-    ggplot(df_plot, aes(x=get(column_id), y=percentage)) +
+    p <- ggplot(df_plot, aes(x=get(column_id), y=percentage)) +
       geom_bar(stat = 'identity') +
       labs(x=column_id,
-           y= 'Percentage of respondants') +
-      theme_bw()
+           y = 'Percentage of respondants')
   } else {
-    ggplot(df_plot, aes(x=get(column_id), y=count)) +
+    p <- ggplot(df_plot, aes(x=get(column_id), y=count)) +
       geom_bar(stat = 'identity') +
       labs(x=column_id,
-           y= 'Percentage of respondants') +
-      theme_bw()
+           y= 'Number of respondants')
   }
+  p +
+    theme_bw() +
+    labs(subtitle = questions[1, column_n])
 
 }
 
 
-plot_facet_result <- function(column_n, group, df = survey_results, as_percent = T) {
+plot_facet_result <- function(column_n,
+                              group_n,
+                              df = survey_results,
+                              questions = questions,
+                              as_percent = T) {
 
 
   # extract column id
   column_id <- colnames(df[,column_n])
+  group_id <- colnames(df[,group_n])
+
   nrow <- df |>
-    group_by(across(all_of(group))) |>
+    group_by(across(all_of(group_id))) |>
     summarise(total = n(), .groups = 'drop')
 
   # summarise the results
   df_plot <-
     df |>
-    group_by(across(all_of(c(group, column_id)))) |>
+    group_by(across(all_of(c(group_id, column_id)))) |>
     summarise(count = n(), .groups = 'drop') |>
-    full_join(nrow, by = group) |>
+    full_join(nrow, by = group_id) |>
     mutate(percentage = 100*(count/total))
 
   # plot results
   if (as_percent) {
-    ggplot(df_plot, aes(x=get(column_id), y=percentage)) +
+    p <- ggplot(df_plot, aes(x=get(column_id), y=percentage)) +
       geom_bar(stat = 'identity') +
       labs(x=column_id,
            y= 'Percentage of respondants') +
-      theme_bw() +
-      facet_wrap(~get(group))
+      facet_wrap(~get(group_id))
   } else {
-    ggplot(df_plot, aes(x=get(column_id), y=count)) +
+    p <- ggplot(df_plot, aes(x=get(column_id), y=count)) +
       geom_bar(stat = 'identity') +
       labs(x=column_id,
-           y= 'Percentage of respondants') +
-      theme_bw() +
-      facet_wrap(~get(group))
+           y= 'Number of respondants') +
+      facet_wrap(~get(group_id))
   }
-
+  p +
+    theme_bw() +
+    labs(subtitle = questions[1, column_n]) +
+    theme(axis.text.x = element_text(angle = 90))
 }
