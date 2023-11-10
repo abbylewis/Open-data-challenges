@@ -1,0 +1,130 @@
+---
+title: "initial_data_analysis"
+author: "Freya Olsson"
+date: "2023-11-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+source('R/plotting_functions.R')
+```
+
+## Read in data
+```{r}
+survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c') |> 
+  filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
+  
+questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
+```
+
+## Format data, add summary columns
+```{r}
+survey_results_formatted <- survey_results %>%
+  mutate(Progress = as.numeric(Progress),
+         Country_group = ifelse(Residence %in% c("North America", "Europe"),
+                                Residence,
+                                "Other"),
+         Country_group = ifelse(is.na(Residence), NA, Country_group),
+         Sector_group = ifelse(Sector == "Academia", "Academia", "Other"),
+         Sector_group = ifelse(is.na(Sector), NA, Sector_group)) %>%
+  filter(Progress > 5)
+```
+
+## Bar graph of Experience with Data Analysis, facetted by career stage
+```{r}
+plot_facet_result(column_id = "Experience", group_id = "Career", 
+                  df = survey_results_formatted %>% 
+                    mutate(Experience = str_wrap(Experience, 30)), 
+                  questions = questions, as_percent = F)
+```
+
+## Responses to question "As a data user, what kind of open data challenges have you encountered?" 
+-> maybe # standardised to percentages, and again, could be nice to visualise career stage in there (maybe with colours)?
+```{r}
+user_challenges <- sub("As a data user, what kind of open data challenges have you encountered. - ", "", questions[27:32])
+names(user_challenges) <- colnames(survey_results_formatted)[27:32]
+
+survey_results_formatted_challenge <- survey_results_formatted %>% 
+  filter(`Role type` %in% c("Data user: people who analyze or use data that others collect and share (e.g., modeller)", "Both")) %>%
+  pivot_longer(Challenges_1...27:Challenges_6...32, names_to = "User_challenge", values_to = "Frequency") %>%
+  mutate(User_challenge = user_challenges[User_challenge])
+  
+survey_results_formatted_challenge %>%
+  mutate(User_challenge = str_wrap(User_challenge, 30)) %>%
+  filter(!Career == "Other") %>%
+  ggplot(aes(y = User_challenge, fill = Frequency)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~Career) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "bottom") +
+  xlab("fraction of respondents")
+```
+
+## Bar graph of question "As a data user, what do you think are the minimum requirements for data providers to make their data and workflow sufficiently accessible?"
+```{r}
+survey_results_formatted_requirements <- survey_results_formatted %>%
+  filter(`Role type` %in% c("Data user: people who analyze or use data that others collect and share (e.g., modeller)", "Both")) %>%
+  mutate(Detailed_metadata = grepl("Detailed & high quality metadata", Requirements),
+         Accessible = grepl("Accessible data file format and file size", Requirements),
+         No_account = grepl("Directly accessible data, without requesting account", Requirements),
+         Workflow = grepl("Publish reproducible workflow", Requirements),
+         Available = grepl("Not necessary, available data is enough", Requirements)) %>%
+  pivot_longer(Detailed_metadata:Available, names_to = "Requirement", values_to = "Response")
+
+survey_results_formatted_requirements %>%
+  ggplot(aes(x = Requirement, fill = Response)) +
+  geom_bar(position = "fill")
+```
+
+## Responses to question "As a data provider, what kind of open data challenges have you encountered?" 
+-> maybe # standardised to percentages?
+```{r}
+provider_challenges <- sub("As a data provider, what kind of open data challenges have you encountered. - ", "", questions[43:48])
+names(provider_challenges) <- colnames(survey_results_formatted)[43:48]
+
+survey_results_formatted_challenge2 <- survey_results_formatted %>% 
+  filter(`Role type` %in% c("Data generator/provider: people who generate data through field/lab work or who collect and process large amounts of raw data to produce derived data products (e.g., remote sensing products)", "Both")) %>%
+  pivot_longer(Challenges_1...43:Challenges_6...48, names_to = "Provider_challenge", values_to = "Frequency") %>%
+  mutate(Provider_challenge = provider_challenges[Provider_challenge])
+  
+survey_results_formatted_challenge2 %>%
+  mutate(Provider_challenge = str_wrap(Provider_challenge, 40)) %>%
+  filter(!Career == "Other") %>%
+  ggplot(aes(y = Provider_challenge, fill = Frequency)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~Career) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "bottom") +
+  xlab("fraction of respondents")
+```
+
+## Bar graphs for questions on Motivation and Entities
+```{r}
+# Motivation
+survey_results_formatted_motivation <- survey_results_formatted %>%
+  mutate(Advisor = grepl("Advisor requirement", Motivation),
+         Personal = grepl("Personal desire to support open science", Motivation),
+         Funding = grepl("Funding program requirement", Motivation),
+         Journal = grepl("Journal requirement", Motivation),
+         Other = grepl("Other", Motivation),
+         Recognition = grepl("Recognition", Motivation)) %>%
+  pivot_longer(Advisor:Recognition, names_to = "Motivation_type", values_to = "Response")
+
+survey_results_formatted_motivation %>%
+  ggplot(aes(x = Motivation_type, fill = Response)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~Career)
+
+# Entities
+#"Which of the following entities do you think has the greatest influence to promote publication of open data/workflows?"
+
+survey_results_formatted %>%
+  ggplot(aes(x = Entities)) +
+  geom_bar() +
+  facet_wrap(~Career) +
+  theme(axis.text.x = element_text(angle = 90))
+```
+

@@ -20,25 +20,44 @@ survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheet
 questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
 ```
 
+Format data, add summary columns
+```{r}
+survey_results_formatted <- survey_results %>%
+  mutate(Progress = as.numeric(Progress),
+         Country_group = ifelse(Residence %in% c("North America", "Europe"),
+                                Residence,
+                                "Other"),
+         Country_group = ifelse(is.na(Residence), NA, Country_group),
+         Sector_group = ifelse(Sector == "Academia", "Academia", "Other"),
+         Sector_group = ifelse(is.na(Sector), NA, Sector_group)) %>%
+  filter(Progress > 5)
+```
+
+
 ```{r demographics}
-plot_global_result(column_n = 18, survey_results, as_percent = T, questions = questions)
-plot_global_result(column_n = 20, survey_results, as_percent = T, questions = questions)
-plot_global_result(column_n = 22, survey_results, as_percent = T, questions = questions)
+plot_global_result(column_n = 20, df = survey_results_formatted, as_percent = F, questions = questions)
+plot_global_result(column_id = "Career", df = survey_results_formatted, as_percent = F, questions = questions)
+plot_global_result(column_id = "Sector", df = survey_results_formatted, as_percent = T, questions = questions)
+plot_global_result(column_id = "Residence", df = survey_results_formatted, as_percent = T, questions = questions)
 ```
 
 ```{r demographics-facet}
-plot_facet_result(column_n = 18, group_n = 20, 
-                  df = survey_results, questions = questions, 
+plot_facet_result(column_id = "Career", group_id = "Sector", 
+                  df = survey_results_formatted, questions = questions, 
                   as_percent = F)
 
-plot_facet_result(column_n = 26, group_n = 20, 
-                  df = survey_results, questions = questions, 
+plot_facet_result(column_id = "Sector", group_id = "Residence", 
+                  df = survey_results_formatted, questions = questions, 
+                  as_percent = F)
+
+plot_facet_result(column_id = "Sector", group_id = "Country_group", 
+                  df = survey_results_formatted, questions = questions, 
                   as_percent = F)
 ```
 
 ```{r role-type}
-survey_results_role <- survey_results |> 
+survey_results_formatted_role <- survey_results_formatted |> 
   mutate(`Role type` =  str_split_i(`Role type`, ':', i = 1))
-plot_global_result(column_n = 26, survey_results_role, as_percent = T, questions = questions)
+plot_global_result(column_id = "Role type", df = survey_results_formatted_role, as_percent = T, questions = questions)
 ```
 

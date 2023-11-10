@@ -1,9 +1,10 @@
-plot_global_result <- function(column_n, df = survey_results, as_percent = T, questions) {
+plot_global_result <- function(df = survey_results,
+                               column_id = colnames(df[,column_n]),
+                               column_n = as.numeric(which(colnames(df) == column_id)),
+                               as_percent = T,
+                               questions) {
 
-
-  # extract column id
-  column_id <- colnames(df[,column_n])
-  nrow <- nrow(df)
+  nrow = nrow(df)
 
   # summarise the results
   df_plot <- df |>
@@ -31,16 +32,13 @@ plot_global_result <- function(column_n, df = survey_results, as_percent = T, qu
 }
 
 
-plot_facet_result <- function(column_n,
-                              group_n,
-                              df = survey_results,
+plot_facet_result <- function(df = survey_results,
+                              column_id = colnames(df[,column_n]),
+                              column_n = which(colnames(df) == column_id),
+                              group_id = colnames(df[,group_n]),
+                              group_n = which(colnames(df) == group_id),
                               questions,
                               as_percent = T) {
-
-
-  # extract column id
-  column_id <- colnames(df[,column_n])
-  group_id <- colnames(df[,group_n])
 
   nrow <- df |>
     group_by(across(all_of(group_id))) |>
