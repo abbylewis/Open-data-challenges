@@ -10,6 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 source('R/plotting_functions.R')
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figs")){dir.create("../Figs")}
 ```
 
 ## Read in data
@@ -35,10 +38,12 @@ survey_results_formatted <- survey_results %>%
 
 ## Bar graph of Experience with Data Analysis, facetted by career stage
 ```{r}
+jpeg("Figs/Experience_by_career.jpeg", width = 7, height = 5, units = "in", res = 300)
 plot_facet_result(column_id = "Experience", group_id = "Career", 
                   df = survey_results_formatted %>% 
                     mutate(Experience = str_wrap(Experience, 30)), 
-                  questions = questions, as_percent = F)
+                  questions = questions, as_percent = F, switch_x_y = T)
+dev.off()
 ```
 
 ## Responses to question "As a data user, what kind of open data challenges have you encountered?" 
@@ -52,6 +57,7 @@ survey_results_formatted_challenge <- survey_results_formatted %>%
   pivot_longer(Challenges_1...27:Challenges_6...32, names_to = "User_challenge", values_to = "Frequency") %>%
   mutate(User_challenge = user_challenges[User_challenge])
   
+jpeg("Figs/Data_user_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
 survey_results_formatted_challenge %>%
   mutate(User_challenge = str_wrap(User_challenge, 30)) %>%
   filter(!Career == "Other") %>%
@@ -61,6 +67,7 @@ survey_results_formatted_challenge %>%
   theme(axis.text.x = element_text(angle = 90),
         legend.position = "bottom") +
   xlab("fraction of respondents")
+dev.off()
 ```
 
 ## Bar graph of question "As a data user, what do you think are the minimum requirements for data providers to make their data and workflow sufficiently accessible?"
@@ -74,9 +81,20 @@ survey_results_formatted_requirements <- survey_results_formatted %>%
          Available = grepl("Not necessary, available data is enough", Requirements)) %>%
   pivot_longer(Detailed_metadata:Available, names_to = "Requirement", values_to = "Response")
 
+reqs <- c("Detailed_metadata", "Accessible", "No_account", "Workflow", "Available")
+names(reqs) <- c("Detailed & high quality metadata", 
+                 "Accessible data file format and file size", 
+                 "Directly accessible data, without requesting account", 
+                 "Publish reproducible workflow", 
+                 "Not necessary, available data is enough")
+
+jpeg("Figs/Data_user_requirements.jpeg", width = 7, height = 5, units = "in", res = 300)
 survey_results_formatted_requirements %>%
   ggplot(aes(x = Requirement, fill = Response)) +
-  geom_bar(position = "fill")
+  geom_bar(position = "fill") +
+  scale_x_discrete(breaks = reqs, labels = str_wrap(names(reqs), 20)) +
+  theme(axis.text.x = element_text(angle = 90))
+dev.off()
 ```
 
 ## Responses to question "As a data provider, what kind of open data challenges have you encountered?" 
@@ -90,6 +108,7 @@ survey_results_formatted_challenge2 <- survey_results_formatted %>%
   pivot_longer(Challenges_1...43:Challenges_6...48, names_to = "Provider_challenge", values_to = "Frequency") %>%
   mutate(Provider_challenge = provider_challenges[Provider_challenge])
   
+jpeg("Figs/Data_provider_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
 survey_results_formatted_challenge2 %>%
   mutate(Provider_challenge = str_wrap(Provider_challenge, 40)) %>%
   filter(!Career == "Other") %>%
@@ -99,6 +118,7 @@ survey_results_formatted_challenge2 %>%
   theme(axis.text.x = element_text(angle = 90),
         legend.position = "bottom") +
   xlab("fraction of respondents")
+dev.off()
 ```
 
 ## Bar graphs for questions on Motivation and Entities
@@ -113,18 +133,22 @@ survey_results_formatted_motivation <- survey_results_formatted %>%
          Recognition = grepl("Recognition", Motivation)) %>%
   pivot_longer(Advisor:Recognition, names_to = "Motivation_type", values_to = "Response")
 
+jpeg("Figs/Data_provider_motivation.jpeg", width = 7, height = 5, units = "in", res = 300)
 survey_results_formatted_motivation %>%
   ggplot(aes(x = Motivation_type, fill = Response)) +
   geom_bar(position = "fill") +
   facet_wrap(~Career)
+dev.off()
 
 # Entities
 #"Which of the following entities do you think has the greatest influence to promote publication of open data/workflows?"
 
+jpeg("Figs/Open_data_entities.jpeg", width = 7, height = 5, units = "in", res = 300)
 survey_results_formatted %>%
   ggplot(aes(x = Entities)) +
   geom_bar() +
   facet_wrap(~Career) +
   theme(axis.text.x = element_text(angle = 90))
+dev.off()
 ```
 
