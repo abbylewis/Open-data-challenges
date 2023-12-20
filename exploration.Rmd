@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
+library(cowplot)
 source('R/plotting_functions.R')
 ```
 
@@ -16,8 +17,6 @@ source('R/plotting_functions.R')
 ```{r}
 survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c') |> 
   filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
-  
-questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
 ```
 
 Format data, add summary columns
@@ -29,16 +28,41 @@ survey_results_formatted <- survey_results %>%
                                 "Other"),
          Country_group = ifelse(is.na(Residence), NA, Country_group),
          Sector_group = ifelse(Sector == "Academia", "Academia", "Other"),
-         Sector_group = ifelse(is.na(Sector), NA, Sector_group)) %>%
+         Sector_group = ifelse(is.na(Sector), NA, Sector_group),
+         Residence = ifelse(Residence == 'South America, Central America, and Caribbean',
+                            'S. and C. America',
+                            Residence)) %>%
   filter(Progress > 5)
+
+  
+questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c')[1,]
 ```
 
 
 ```{r demographics}
-plot_global_result(column_n = 20, df = survey_results_formatted, as_percent = F, questions = questions)
-plot_global_result(column_id = "Career", df = survey_results_formatted, as_percent = F, questions = questions)
-plot_global_result(column_id = "Sector", df = survey_results_formatted, as_percent = T, questions = questions)
-plot_global_result(column_id = "Residence", df = survey_results_formatted, as_percent = T, questions = questions)
+plot_grid(plot_global_result(column_id = "Country_group", 
+                   df = survey_results_formatted, 
+                   as_percent = F,
+                   questions = questions) + coord_flip(),
+          plot_global_result(column_id = "Residence", 
+                   df = filter(survey_results_formatted, Country_group == 'Other'), 
+                   as_percent = F, 
+                   questions = questions) + coord_flip(),
+          nrow = 1, align = 'h') |> 
+  ggsave(filename = 'plots/Country.png', height = 15, width = 20, units='cm')
+
+
+plot_grid(plot_global_result(column_id = "Sector_group", 
+                   df = survey_results_formatted, 
+                   as_percent = F,
+                   questions = questions) + coord_flip(),
+          plot_global_result(column_id = "Sector", 
+                   df = filter(survey_results_formatted, Sector_group == 'Other'), 
+                   as_percent = F,
+                   questions = questions) + coord_flip(),
+          nrow = 1, align = 'h') |> 
+  ggsave(filename = 'plots/Sector.png', height = 15, width = 20, units='cm')
+
 ```
 
 ```{r demographics-facet}
@@ -48,7 +72,7 @@ plot_facet_result(column_id = "Career", group_id = "Sector",
 
 plot_facet_result(column_id = "Sector", group_id = "Residence", 
                   df = survey_results_formatted, questions = questions, 
-                  as_percent = F)
+                  as_percent = T)
 
 plot_facet_result(column_id = "Sector", group_id = "Country_group", 
                   df = survey_results_formatted, questions = questions, 
@@ -61,3 +85,7 @@ survey_results_formatted_role <- survey_results_formatted |>
 plot_global_result(column_id = "Role type", df = survey_results_formatted_role, as_percent = T, questions = questions)
 ```
 
+```{r career-stage}
+plot_global_result(column_id = "Career", df = survey_results_formatted, as_percent = T, questions = questions)
+plot_global_result(column_id = )
+```
