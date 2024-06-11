@@ -16,6 +16,7 @@ if (!dir.exists("../Figs")){dir.create("../Figs")}
 ```
 
 ## Read in data
+
 ```{r}
 survey_results <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link', col_types = 'c') |> 
   filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
@@ -24,6 +25,7 @@ questions <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1
 ```
 
 ## Format data, add summary columns
+
 ```{r}
 survey_results_formatted <- survey_results %>%
   mutate(Progress = as.numeric(Progress),
@@ -32,11 +34,15 @@ survey_results_formatted <- survey_results %>%
                                 "Other"),
          Country_group = ifelse(is.na(Residence), NA, Country_group),
          Sector_group = ifelse(Sector == "Academia", "Academia", "Other"),
-         Sector_group = ifelse(is.na(Sector), NA, Sector_group)) %>%
+         Sector_group = ifelse(is.na(Sector), NA, Sector_group),
+         Career = factor(Career, levels = c("Graduate student/early-career researcher", 
+                                            "Mid-career faculty/research staff",
+                                            "Late-career researcher/employee"))) %>%
   filter(Progress > 5)
 ```
 
 ## Bar graph of Experience with Data Analysis, facetted by career stage
+
 ```{r}
 jpeg("Figs/Experience_by_career.jpeg", width = 7, height = 5, units = "in", res = 300)
 plot_facet_result(column_id = "Experience", group_id = "Career", 
@@ -46,8 +52,10 @@ plot_facet_result(column_id = "Experience", group_id = "Career",
 dev.off()
 ```
 
-## Responses to question "As a data user, what kind of open data challenges have you encountered?" 
--> maybe # standardised to percentages, and again, could be nice to visualise career stage in there (maybe with colours)?
+## Responses to question "As a data user, what kind of open data challenges have you encountered?"
+
+-\> maybe \# standardised to percentages, and again, could be nice to visualise career stage in there (maybe with colours)?
+
 ```{r}
 user_challenges <- sub("As a data user, what kind of open data challenges have you encountered. - ", "", questions[27:32])
 names(user_challenges) <- colnames(survey_results_formatted)[27:32]
@@ -55,7 +63,13 @@ names(user_challenges) <- colnames(survey_results_formatted)[27:32]
 survey_results_formatted_challenge <- survey_results_formatted %>% 
   filter(`Role type` %in% c("Data user: people who analyze or use data that others collect and share (e.g., modeller)", "Both")) %>%
   pivot_longer(Challenges_1...27:Challenges_6...32, names_to = "User_challenge", values_to = "Frequency") %>%
-  mutate(User_challenge = user_challenges[User_challenge])
+  group_by(IPAddress) %>%
+  filter(!sum(is.na(Frequency)) == 6) %>%
+  ungroup() %>%
+  mutate(User_challenge = user_challenges[User_challenge],
+         Frequency = ifelse(is.na(Frequency), "NA", Frequency),
+         Frequency = ifelse(Frequency == "Rare challenge", "Occasional challenge", Frequency),
+         Frequency = factor(Frequency, levels = c("NA", "Never encountered","Occasional challenge", "Frequent challenge")) )
   
 jpeg("Figs/Data_user_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
 survey_results_formatted_challenge %>%
@@ -64,13 +78,31 @@ survey_results_formatted_challenge %>%
   ggplot(aes(y = User_challenge, fill = Frequency)) +
   geom_bar(position = "fill") +
   facet_wrap(~Career) +
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 90),
-        legend.position = "bottom") +
-  xlab("fraction of respondents")
+        legend.position = "bottom",
+        axis.title.y = element_blank()) +
+  xlab("fraction of respondents") +
+  ggtitle("Data user challenges") +
+  scale_fill_manual(values = c("grey", viridis::viridis(4)), guide = guide_legend(reverse = TRUE))
 dev.off()
+
+user_unfacet <- survey_results_formatted_challenge %>%
+  mutate(User_challenge = str_wrap(User_challenge, 30)) %>%
+  filter(!Career == "Other") %>%
+  ggplot(aes(y = User_challenge, fill = Frequency)) +
+  geom_bar(position = "fill") +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "bottom",
+        axis.title.y = element_blank()) +
+  xlab("Fraction of respondents") +
+  ggtitle("Data user challenges") +
+  scale_fill_manual(values = c("grey", viridis::viridis(3)), guide = guide_legend(reverse = TRUE))
 ```
 
 ## Bar graph of question "As a data user, what do you think are the minimum requirements for data providers to make their data and workflow sufficiently accessible?"
+
 ```{r}
 survey_results_formatted_requirements <- survey_results_formatted %>%
   filter(`Role type` %in% c("Data user: people who analyze or use data that others collect and share (e.g., modeller)", "Both")) %>%
@@ -97,8 +129,10 @@ survey_results_formatted_requirements %>%
 dev.off()
 ```
 
-## Responses to question "As a data provider, what kind of open data challenges have you encountered?" 
--> maybe # standardised to percentages?
+## Responses to question "As a data provider, what kind of open data challenges have you encountered?"
+
+-\> maybe \# standardised to percentages?
+
 ```{r}
 provider_challenges <- sub("As a data provider, what kind of open data challenges have you encountered. - ", "", questions[43:48])
 names(provider_challenges) <- colnames(survey_results_formatted)[43:48]
@@ -106,7 +140,13 @@ names(provider_challenges) <- colnames(survey_results_formatted)[43:48]
 survey_results_formatted_challenge2 <- survey_results_formatted %>% 
   filter(`Role type` %in% c("Data generator/provider: people who generate data through field/lab work or who collect and process large amounts of raw data to produce derived data products (e.g., remote sensing products)", "Both")) %>%
   pivot_longer(Challenges_1...43:Challenges_6...48, names_to = "Provider_challenge", values_to = "Frequency") %>%
-  mutate(Provider_challenge = provider_challenges[Provider_challenge])
+  group_by(IPAddress) %>%
+  filter(!sum(is.na(Frequency)) == 6) %>%
+  ungroup() %>%
+  mutate(Provider_challenge = provider_challenges[Provider_challenge],
+         Frequency = ifelse(is.na(Frequency), "NA", Frequency),
+         Frequency = factor(Frequency, levels = c("NA", "Never encountered","Occasional challenge", "Frequent challenge"))
+         )
   
 jpeg("Figs/Data_provider_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
 survey_results_formatted_challenge2 %>%
@@ -115,13 +155,36 @@ survey_results_formatted_challenge2 %>%
   ggplot(aes(y = Provider_challenge, fill = Frequency)) +
   geom_bar(position = "fill") +
   facet_wrap(~Career) +
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 90),
-        legend.position = "bottom") +
-  xlab("fraction of respondents")
+        legend.position = "bottom",
+        axis.title.y = element_blank()) +
+  xlab("Fraction of respondents") +
+  ggtitle("Data provider challenges") +
+  scale_fill_manual(values = c("grey", viridis::viridis(3)), guide = guide_legend(reverse = TRUE))
+dev.off()
+
+provider_unfacet <- survey_results_formatted_challenge2 %>%
+  mutate(Provider_challenge = str_wrap(Provider_challenge, 40)) %>%
+  filter(!Career == "Other") %>%
+  ggplot(aes(y = Provider_challenge, fill = Frequency)) +
+  geom_bar(position = "fill") +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "bottom",
+        axis.title.y = element_blank()) +
+  xlab("Fraction of respondents") +
+  ggtitle("Data provider challenges") +
+  scale_fill_manual(values = c("grey", viridis::viridis(3)), guide = guide_legend(reverse = TRUE))
+
+library(ggpubr)
+jpeg("Figs/All_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
+ggarrange(provider_unfacet, user_unfacet, labels = "auto", common.legend = T, legend = "bottom")
 dev.off()
 ```
 
 ## Bar graphs for questions on Motivation and Entities
+
 ```{r}
 # Motivation
 survey_results_formatted_motivation <- survey_results_formatted %>%
@@ -150,5 +213,21 @@ survey_results_formatted %>%
   facet_wrap(~Career) +
   theme(axis.text.x = element_text(angle = 90))
 dev.off()
+```
+
+```{r}
+# Motivation
+survey_results_formatted_metadata <- survey_results_formatted %>%
+  mutate(Repo = grepl("data repository", Metadata),
+         Funding = grepl("funding agency", Metadata),
+         None = grepl("without", Metadata),
+         Team = grepl("project team", Metadata)) %>%
+  pivot_longer(Repo:Team, names_to = "Meta_type", values_to = "Response") %>%
+  filter(!is.na(Response))
+
+survey_results_formatted_metadata %>%
+  ggplot(aes(x = Meta_type, fill = Response)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
