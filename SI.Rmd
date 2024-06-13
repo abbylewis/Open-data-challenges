@@ -79,7 +79,7 @@ questions <- googlesheets4::read_sheet(google_drive_loc, col_types = 'c')[1,]
 
 ## Summary of individual question responses
 
-```{r tables, results='asis', warnings = F, message = F, echo=FALSE}
+```{r tables, results='asis', warnings = F, message = F, echo = F}
 columns <- survey_results_formatted[,18:55] %>% 
   select(!contains('_TEXT')) %>% 
   colnames()
@@ -94,6 +94,4 @@ for (col in columns) {
   }
   
 }
-
-survey_results_formatted$Requirements
 ```
