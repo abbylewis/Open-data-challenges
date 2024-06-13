@@ -1,0 +1,73 @@
+---
+title: "SI for Open Data Challenges"
+author: "Abigail Lewis & Freya Olsson"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Supplementary Text 2 - survey results summary
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy=TRUE, echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+source('R/table_functions.R')
+```
+
+## Read in data
+
+Note: data are read in from an authenticated Google Sheet that is only available to approved individuals.
+
+```{r, echo = FALSE}
+google_drive_loc <- 'https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link'
+```
+
+
+```{r message=FALSE, warning=F, results='asis'}
+
+survey_results <- googlesheets4::read_sheet(google_drive_loc,
+                                            col_types = 'c') |> 
+  filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
+```
+
+```{r warning= F, message = F, results='asis'}
+survey_results_formatted <- survey_results %>%
+  mutate(Progress = as.numeric(Progress),
+         Country_group = ifelse(Residence %in% c("North America",
+                                                 "Europe"),
+                                Residence,
+                                "Other"),
+         Country_group = ifelse(is.na(Residence),
+                                NA,
+                                Country_group),
+         Sector_group = ifelse(Sector == "Academia",
+                               "Academia",
+                               "Other"),
+         Sector_group = ifelse(is.na(Sector),
+                               NA, Sector_group),
+         Residence = ifelse(
+           Residence ==
+             'South America, Central America, and Caribbean',
+           'S. and C. America',
+           Residence)) %>%
+  filter(Progress > 5)
+
+  
+questions <- googlesheets4::read_sheet(google_drive_loc, col_types = 'c')[1,]
+```
+
+## Summary of individual question responses
+
+```{r results='asis', warnings = F, message = F}
+columns <- survey_results_formatted[,18:55] %>% 
+  select(!contains('_TEXT')) %>% 
+  colnames()
+  
+
+for (col in columns) {
+  print(make_summary_table(df = survey_results_formatted, column_id = col))
+}
+```
+
+This document was generated using `rmarkdown::render("SI.Rmd", output_format = "pdf_document")`
