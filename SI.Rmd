@@ -9,13 +9,35 @@ This supplemental document provides a list of networks that were contacted for s
 
 # Text 2.1 Distribution
 
-We distributed our survey via the following scientific networks:
+We distributed our survey via social media as a post on Twitter/X and Bluesky and via the following scientific networks:
 
 -   Aquatic Ecosystem MOdeling Network - Junior (AEMON-J)
 
 -   British Ecological Society (BES) Aquatic Ecology Special Interest Group
 
 -   Coastal and Estuarine Research Federation (CERF)
+
+-   Consortium of Aquatic Science Societies (CASS). CASS members include:
+
+    -   American Fisheries Society
+
+    -   Association for the Sciences of Limnology and Oceanography
+
+    -   Coastal and Estuarine Research Federation
+
+    -   Freshwater Mollusk Conservation Society
+
+    -   International Association for Great Lakes Research
+
+    -   North American Lake Management Society
+
+    -   Phycological Society of America
+
+    -   Society of Canadian Aquatic Sciences
+
+    -   Society for Freshwater Science
+
+    -   Society of Wetland Scientists
 
 -   Consortium of Universities for the Advancement of Hydrologic Sciences (CUAHSI)
 
@@ -29,7 +51,9 @@ We distributed our survey via the following scientific networks:
 
 -   Society for Open, Reliable, and Transparent Ecology and Evolutionary Biology (SORTEE)
 
-The survey was also distributed via social media as a post on Twitter/X and Bluesky.
+\
+
+\
 
 # Text 2.2 Results Summary
 
@@ -71,10 +95,12 @@ survey_results_formatted <- survey_results %>%
              'South America, Central America, and Caribbean',
            'S. and C. America',
            Residence)) %>%
-  filter(Progress > 5)
+  filter(Progress > 5) %>%
+  mutate(across(everything(), ~ sub("a,G", "a, G", .x)))
 
   
-questions <- googlesheets4::read_sheet(google_drive_loc, col_types = 'c')[1,]
+questions <- googlesheets4::read_sheet(google_drive_loc, col_types = 'c')[1,] %>%
+  mutate(across(everything(), ~ sub("- Selected Choice", "", .x)))
 ```
 
 ## Summary of individual question responses
@@ -87,6 +113,19 @@ columns <- survey_results_formatted[,18:55] %>%
 checkbox <- c("Source", "Requirements", "Metadata", "Contacted", "Motivation")
 
 for (col in columns) {
+  #Add explanatory text
+  if(col == "Challenges_1...27"){
+    cat('Note: "rare challenge" and "occasional challenge" from tables 7-12 below were combined into one category ("occasional challenge") in figure 2 of the main manuscript. This was done for consistency with the categories for data providers (tables 20-25).')
+  }
+  #Add manual line breaks
+  if(col == "Ease_3" | col == "Code publishing" | col == "Software"){
+    cat("&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  ")
+  }
+  #Print tables
   if(col %in% checkbox){
     print(make_summary_table_checkbox(df = survey_results_formatted, column_id = col))
   } else {
