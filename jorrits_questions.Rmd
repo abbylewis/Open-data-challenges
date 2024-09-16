@@ -181,6 +181,14 @@ library(ggpubr)
 jpeg("Figs/All_challenges.jpeg", width = 10, height = 5, units = "in", res = 300)
 ggarrange(provider_unfacet, user_unfacet, labels = "auto", common.legend = T, legend = "bottom")
 dev.off()
+
+tiff("Figs/All_challenges.tif", width = 10, height = 5, units = "in", res = 300)
+ggarrange(provider_unfacet, user_unfacet, labels = "auto", common.legend = T, legend = "bottom")
+dev.off()
+
+pdf("Figs/All_challenges.pdf", width = 10, height = 5)
+ggarrange(provider_unfacet, user_unfacet, labels = "auto", common.legend = T, legend = "bottom")
+dev.off()
 ```
 
 ## Bar graphs for questions on Motivation and Entities
