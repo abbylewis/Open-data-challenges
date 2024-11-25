@@ -1,13 +1,47 @@
 ---
-title: "Supplementary Text 2 - Survey distribution and results"
+title: "Supplementary Text"
 output: 
      pdf_document:
          extra_dependencies: ["booktabs"]
 ---
 
-This supplemental document provides a list of networks that were contacted for survey distribution (Text 2.1) and a summary of survey results for each questions (Text 2.2).
+This supplemental document provides a table of acronyms (Text S1), a list of networks that were contacted for survey distribution (Text S2.1) and a summary of survey results for each question (Text S2.2).
 
-# Text 2.1 Distribution
+# Text S1: Acronyms
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy=TRUE, echo = TRUE)
+#Load packages
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+library(formatR)
+library(kableExtra)
+source('R/table_functions.R')
+
+#Load data
+# Note: data are read in from an authenticated Google Sheet that is only available to approved individuals.}
+google_drive_loc <- 'https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link'
+
+survey_results <- googlesheets4::read_sheet(google_drive_loc,
+                                            col_types = 'c') |> 
+  filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
+
+table <- read_csv("Table to add to SI.csv", show_col_types = F)
+```
+
+\renewcommand{\arraystretch}{1.5}
+```{r table, results='asis', warnings = F, message = F, echo = F}
+caption <- "Acronyms used in this manuscript. References can be found in the reference list in the main manuscript."
+knitr::kable(table, caption = caption, escape = F,
+             linesep = "\\addlinespace")
+```
+
+\
+
+\
+
+# Text S2.1 Distribution
 
 We distributed our survey via social media as a post on Twitter/X and Bluesky and via the following scientific networks:
 
@@ -47,32 +81,13 @@ We distributed our survey via social media as a post on Twitter/X and Bluesky an
 
 -   German Society for Limnology (DGL)
 
+-   Global Lake Ecological Observatory Network (GLEON)
+
 -   International Society of Limnology (SIL)
 
 -   Society for Open, Reliable, and Transparent Ecology and Evolutionary Biology (SORTEE)
 
-\
-
-\
-
-# Text 2.2 Results Summary
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy=TRUE, echo = TRUE)
-#Load packages
-library(tidyverse)
-library(lubridate)
-library(htmltools)
-source('R/table_functions.R')
-
-#Load data
-# Note: data are read in from an authenticated Google Sheet that is only available to approved individuals.}
-google_drive_loc <- 'https://docs.google.com/spreadsheets/d/1dKGzFRlMCs8bYsyo3gmbrZPAY4-bgWMH_L9T23iO6iE/edit?usp=drive_link'
-
-survey_results <- googlesheets4::read_sheet(google_drive_loc,
-                                            col_types = 'c') |> 
-  filter(as_datetime(StartDate) >= as_datetime('2023-09-21')) 
-```
+# Text S2.2: Results Summary
 
 ```{r format, include=FALSE}
 #Format data
@@ -103,8 +118,9 @@ questions <- googlesheets4::read_sheet(google_drive_loc, col_types = 'c')[1,] %>
   mutate(across(everything(), ~ sub("- Selected Choice", "", .x)))
 ```
 
-## Summary of individual question responses
+Summary of individual question responses
 
+\renewcommand{\arraystretch}{1}
 ```{r tables, results='asis', warnings = F, message = F, echo = F}
 columns <- survey_results_formatted[,18:55] %>% 
   select(!contains('_TEXT')) %>% 
@@ -118,7 +134,7 @@ for (col in columns) {
     cat('Note: "rare challenge" and "occasional challenge" from tables 7-12 below were combined into one category ("occasional challenge") in figure 2 of the main manuscript. This was done for consistency with the categories for data providers (tables 20-25).')
   }
   #Add manual line breaks
-  if(col == "Ease_3" | col == "Code publishing" | col == "Software"){
+  if(col == "Ease_4" | col == "Challenges_6...48"){
     cat("&nbsp;  
 &nbsp;  
 &nbsp;  
